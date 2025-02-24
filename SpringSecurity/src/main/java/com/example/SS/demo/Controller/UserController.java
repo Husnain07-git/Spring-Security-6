@@ -35,6 +35,7 @@ public class UserController {
             return GenericResponse.failed(null, "201", e.getMessage());
         }
     }
+
     @PostMapping("/login")
     public GenericResponse<String> login(@RequestBody User user) {
         try {
