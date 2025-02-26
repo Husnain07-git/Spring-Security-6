@@ -10,17 +10,21 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
     @Autowired
     private MyUserDetailsService userDetailsService;
+    @Autowired
+    private JwtFilter JwtFilter;
 
 
     @Bean
@@ -28,9 +32,17 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // Correct way to disable CSRF in Spring Security 6+
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/user/create-user","/user/login").permitAll()
-                        .anyRequest().authenticated()
-                ).formLogin(Customizer.withDefaults());
+                        .requestMatchers("/user/create-user", "/user/login")
+                        .permitAll()
+                        .anyRequest().authenticated() //by default it use UserPasswordAuthentication Filer
+
+                )
+                .httpBasic(Customizer.withDefaults())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                //By default username password authentication filer active in basic auth In SPRING SECURITY
+                //But we have to add one filter before this filter which is JwtFiler
+                .addFilterBefore(JwtFilter, UsernamePasswordAuthenticationFilter.class)
+        ;
 
         return http.build();
     }
@@ -50,7 +62,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-    //as AuthenticationManager manager is an interface so wee need a class that provide AuthenticationManagerf
+        //as AuthenticationManager manager is an interface so wee need a class that provide AuthenticationManagerf
         return configuration.getAuthenticationManager();
     }
 

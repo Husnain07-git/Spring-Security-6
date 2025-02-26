@@ -47,7 +47,7 @@ public class UserService {
 
             return service.generateToken(user.getUsername());
         }
-        return "No Authenticated";
+        return "fail";
     }
 
     public User getById(Long id) {
